@@ -1,0 +1,3 @@
+The purpose of this project is to plot some quantities as a function of
+direction defined in 3D space. The name "chanmap" derives from the application
+to plotting the channeling directions in a stereographic plot.
