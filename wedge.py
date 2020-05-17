@@ -58,19 +58,28 @@ class Wedge:
         points = list(intersect(self.horizontal_line, object))
         points += list(intersect(self.diagonal_line, object))
         points += list(intersect(self.circle, object))
-        # remove points outside the wedge
+        # collect points outside the wedge
+        delete_points = set()
         for point in points:
             if not self.contains(point):
-                points.remove(point)
-        # remove duplicate points
+                delete_points.add(point)
+        # collect duplicate points
+        points = list(set(points))
         for point1 in points:
             for point2 in points:
                 if point1 is point2:
-                    continue
+                    break
                 x1, y1 = point1
                 x2, y2 = point2
                 if abs(x1-x2) < tol and abs(y1-y2) < tol:
-                    points.remove(point2)
+                    delete_points.add(point1)
+        # remove points
+        for delete_point in delete_points:
+            points.remove(delete_point)
+        # order according to increasing distance from origin
+        def radius(point):
+            return np.hypot(*point)
+        points.sort(key=radius)
         return points
 
     def get_polygon(self, dangle=np.radians(1)):

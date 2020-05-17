@@ -119,6 +119,48 @@ class Circle:
         return xy
 
 
+class Arc:
+    """
+    Arc of circle between the radii through point1 and point2.
+
+    Always the shorter of the two possible arcs (<180 deg) is taken.
+    The orientation of the arc in counterclockwise.
+    """
+    def __init__(self, xc, yc, r, point1, point2):
+        self.xc = xc
+        self.yc = yc
+        self.r = r
+        x1, y1 = point1
+        x2, y2 = point2
+        self.angle1 = np.arctan2(y1 - self.yc, x1 - self.xc)
+        self.angle2 = np.arctan2(y2 - self.yc, x2 - self.xc)
+        # make sure between angles < 180 deg
+        dangle = self.angle2 - self.angle1
+        if -np.pi < dangle < 0 or dangle > np.pi:
+            self.angle1, self.angle2 = self.angle2, self.angle1
+
+    def get_polygon(self, dangle=np.radians(0.1)):
+        """
+        Return arc as a polygon.
+
+        :param dangle: angle increment (rad)
+        :return xy: arc as a polygon (Nx2 array)
+        """
+        angle1 = self.angle1
+        angle2 = self.angle2
+        if angle2 < angle1:
+            angle2 += 2 * np.pi
+        angles = np.linspace(angle1, angle2,
+                             (angle2 - angle1) / dangle + 1,
+                             endpoint=True)
+        x = self.xc + self.r * np.cos(angles)
+        y = self.yc + self.r * np.sin(angles)
+
+        xy = np.vstack((x,y)).T
+
+        return xy
+
+
 def _intersect_line_line(line1, line2):
     """
     Intersect two straight lines.
@@ -130,11 +172,11 @@ def _intersect_line_line(line1, line2):
     """
     denom = line1.a * line2.b - line2.a * line1.b
     if denom == 0:
-        return
+        return []
     x = (line1.b * line2.c - line2.b * line1.c) / (-denom)
     y = (line1.a * line2.c - line2.a * line1.c) / denom
 
-    return x, y
+    return [(x, y)]
 
 
 def _intersect_circle_line(circle, line):
@@ -189,8 +231,7 @@ def intersect(object1, object2):
     :return (x, y): Intersection point(s).
     """
     if isinstance(object1, Line) and isinstance(object2, Line):
-        solution = _intersect_line_line(object1, object2)
-        return (solution,)
+        return _intersect_line_line(object1, object2)
     elif isinstance(object1, Line) and isinstance(object2, Circle):
         return _intersect_circle_line(object2, object1)
     elif isinstance(object1, Circle) and isinstance(object2, Line):
